@@ -1,0 +1,175 @@
+---
+description:
+globs:
+alwaysApply: true
+---
+# Coding Agent Comprehensive Guide
+
+## 1. Purpose & Scope
+
+This guide establishes the **rails, expectations, boundaries, and requirements** for any autonomous _Coding Agent_ working on large‑scale web application projects.
+
+## 2. Quick‑Start Checklist
+
+1. **Bootstrap**
+
+   ```bash
+   pnpm install
+   pnpm db:migrate   # Fails if schema drift is detected
+   pnpm dev
+   ```
+
+2. **Pre‑flight Quality Gate**
+
+   ```bash
+   pnpm lint && pnpm format:check && pnpm types:check && pnpm test && pnpm docs:check
+   ```
+
+3. **Create a Ticket** (te, assign exactly **one** role, push a draft PR.
+4. **TDD Cycle** — Red → Green → Refactor.
+5. **Commit & CI** – Test, Lint, Format, Build, all must be green before closing a ticket.
+5. **Git Brancn't c. Work on whatever branch you're on.
+6. **Deploy** - NEVER do it. Let the human deploy.
+
+---
+
+## 3. Technology & Tooling Standards
+
+| Layer         | Mandatory Tech                     |
+| ------------- | ---------------------------------- |
+| **Framework** | Next.js 15 (App Router) + React 19 |
+| **Language**  | TypeScript 5.8+ strict             |
+| **Styling**   | Tailwind 4.x + shadcn/ui           |
+| **DB / ORM**  | PostgreSQL + Drizzle ORM           |
+| **Auth**      | Privy OAuth + JWT rotation         |
+| **AI**        | OpenRouter API (abstracted)        |
+| **Package**   | pnpm 9.12.3+                       |
+| **CI**        | GitHub Actions + Vercel            |
+
+> **Never introduce new libraries** without PRODY approval.
+
+---
+
+## 4. Development Environment
+
+### 4.1 Installation
+
+```bash
+nvm install 20 && nvm use 20
+npm i -g pnpm@9.12
+```
+
+### 4.2 Local Database
+
+Docker:
+
+```bash
+docker run --name postgres-dev -e POSTGRES_PASSWORD=password -p 5432:5432 -d postgres:latest
+```
+
+Or Neon connection via `.env.local`.
+
+### 4.3 Environment Variables
+
+use .env.local
+ask the human for help to setup if you need to.
+
+---
+
+## 5. Project Layout
+
+```
+.agent/                 # Knowledge base for the agent
+src/
+├── app/                # Next.js App Router
+├── components/         # UI + shadcn/ui extensions
+├── lib/                # Business logic & utilities
+├── contracts/          # Zod schemas
+├── types/              # Global & feature types
+└── contexts/           # React contexts
+```
+
+---
+
+## 6. Quality Gates
+
+1. **ESLint** – custom plugin + simple‑import‑sort + react‑hooks.
+2. **Prettier** – enforced.
+3. **Type Checks** – `tsc --noEmit`.
+4. **Unit, Component, Integration & E2E Tests** – Jest + RTL + Playwright.
+
+   - Global ≥ 90 % coverage.
+   - Critical paths ≥ 95 %.
+
+5. **Docs** – ≥ 90 % TSDoc.
+
+All six gates must pass _locally_ before closing a ticket.
+
+---
+
+## 7. Testing Strategy
+
+- **Philosophy**: TDD, accessibility‑first, fail‑fast.
+- **Structure**: `__tests__/unit | components | api | integration`.
+
+---
+
+## 8. Workflow & Ticketing
+
+| Phase              | Responsible Role | Key Rules                       |
+| ------------------ | ---------------- | ------------------------------- |
+| **Spec**           | PRODY            | Define acceptance criteria & UX |
+| **Implementation** | FRONTY / BACKY   | Break into ≤ 5‑day tickets      |
+| **Quality**        | QATY             | Maintain coverage & gates       |
+| **Merge**          | PRODY            | CI green, one reviewer          |
+
+**Single Assignee Policy** — each ticket owned by exactly _one_ dev.
+Don't apply ticket sizes or time estimates, ever.
+Don't create branches, ever.
+
+---
+
+## 9. Coding Agent Operating Rules
+
+1. **Always read `.agent/goals.md` before coding.**
+2. **Never bypass quality gates.**
+3. **Write granular, logically‑scoped tickets.**
+4. **Keep docs in sync** — update `.agent/` files on every architectural change.
+5. **Move tickets** from `tickets/` → `closed/` when done. Only PRODY will do the this.
+
+---
+
+## 10. Architecture Patterns
+
+- **API Routes** — REST‑style, validated with Zod, typed always.
+- **Component Pattern** — typed `forwardRef`, variants via `cn()`.
+
+---
+
+## 11. Database & ORM
+
+- PostgreSQL in **ALL** environments.
+- Migrations via `drizzle-kit`.
+- Schemas live in `db/schema.ts`; keep lookup tables for enums & tags.
+
+---
+
+## 12. Security
+
+- Authenticate protected endpoints via Privy token middleware.
+- Never commit secrets; use Vercel env management. Vercel stores .env files in .vercel by using vercell --pull
+
+---
+
+## 15. Key Success Factors
+
+1. _Never_ compromise on quality gates.
+2. Maintain exhaustive documentation.
+3. Preserve single‑responsibility & small PRs.
+4. Prioritize accessibility & type safety.
+5. Keep `.agent/` the _single source of truth_.
+6. Always review .agent/styles.md before working on UI changes.
+
+---
+
+_End of Guide — Drive toward maintainable, accessible, high‑quality software._

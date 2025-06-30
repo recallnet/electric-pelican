@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1750873502687,
+      "tag": "0000_first_komodo",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1750895682450,
+      "tag": "0001_huge_fenris",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1751058874503,
+      "tag": "0002_cuddly_doctor_strange",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1751059200000,
+      "tag": "0003_update_router_results",
+      "breakpoints": true
+    }
+  ]
+}

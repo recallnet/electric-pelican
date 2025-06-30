@@ -1,0 +1,424 @@
+/**
+ * Common component prop types used across the application
+ */
+
+import { type TournamentSummary } from "./app";
+import { type BracketMatch, type ModelResponse, type TournamentPhase } from "./tournament";
+
+/** Props for components that display tournament/evaluation data */
+export interface TournamentDisplayProps {
+  tournamentId: string;
+  phase: TournamentPhase;
+  modelResponses?: Record<string, ModelResponse>;
+}
+
+/** Props for components that handle model data */
+export interface ModelDisplayProps {
+  modelId: string;
+  modelName: string;
+  response?: string;
+  isWinner?: boolean;
+}
+
+/** Props for pagination components */
+export interface PaginationProps {
+  currentPage: number;
+  totalPages: number;
+  onPageChange: (page: number) => void;
+}
+
+/** Props for components that display rich content */
+export interface RichContentProps {
+  content: string;
+  className?: string;
+}
+
+/**
+ * Component-specific types and props
+ */
+
+/** Props for tag cloud */
+export interface TagCloudProps {
+  /** Array of all tags from tournaments */
+  allTags: string[];
+  /** Optional className for styling */
+  className?: string;
+}
+
+/** Tag with count and display properties */
+export interface TagWithCount {
+  /** Tag text */
+  tag: string;
+  /** Number of occurrences */
+  count: number;
+  /** Display size based on frequency */
+  size: "xs" | "sm" | "base" | "lg" | "xl" | "2xl";
+  /** Display opacity based on frequency */
+  opacity: number;
+}
+
+/** Props for judge prompt editor */
+export interface JudgePromptEditorProps {
+  initialPrompt: string;
+  onPromptChange: (prompt: string) => void;
+  onSubmit: () => void;
+  isLoading?: boolean;
+}
+
+/** Props for tournament bracket */
+export interface TournamentBracketProps {
+  matches: BracketMatch[];
+  currentRound: number;
+  totalRounds: number;
+  bracketSize: number;
+  modelNames?: Record<string, string>;
+  modelResponses?: Record<string, ModelResponse>;
+  className?: string;
+}
+
+/** Props for round data */
+export interface RoundData {
+  round: number;
+  matches: BracketMatch[];
+  isActive: boolean;
+}
+
+/** Props for match result */
+export interface MatchResultProps {
+  match: BracketMatch;
+  modelNames?: Record<string, string>;
+  modelResponses?: Record<string, ModelResponse>;
+  isCurrentRound?: boolean;
+  className?: string;
+  onShowJudgeEval?: () => void;
+}
+
+/** Props for prompt challenge form */
+export interface PromptChallengeFormProps {
+  /** Callback when a valid prompt is submitted */
+  onSubmit?: (data: { prompt: string; judgePrompt: string }) => void;
+  /** Optional initial prompt value */
+  initialPrompt?: string;
+  /** Optional initial judge prompt value */
+  initialJudgePrompt?: string;
+  /** Whether the form is in a loading state */
+  loading?: boolean;
+  /** Optional CSS class name */
+  className?: string;
+}
+
+/** Props for users table */
+export interface UsersTableProps {
+  users: UserSummary[];
+}
+
+/** User summary data */
+export interface UserSummary {
+  id: string;
+  displayName: string;
+  avatarUrl: string | null;
+  evaluationsCreated: number;
+  topTags: string[];
+  createdAt: string;
+}
+
+/** Props for fork button */
+export interface ForkButtonProps {
+  tournamentId: string;
+  className?: string;
+}
+
+/** Props for dashboard table */
+export interface DashboardTableProps {
+  tournaments: TournamentSummary[];
+  currentUserId?: string;
+}
+
+/** Props for model rank badge */
+export interface ModelRankBadgeProps {
+  rank: number;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}
+
+/** Props for leaderboard filters */
+export interface LeaderboardFiltersProps {
+  searchTerm: string;
+  minMatches: number;
+  onSearchChange: (term: string) => void;
+  onMinMatchesChange: (matches: number) => void;
+  isLoading: boolean;
+}
+
+/** Tag performance data */
+export interface TagData {
+  /** Legacy tag name or hierarchical tag ID */
+  tag: string;
+  /** Tag display name (for hierarchical tags) */
+  displayName?: string;
+  /** Full lineage breadcrumb string (for hierarchical tags) */
+  lineage?: string;
+  /** Performance percentile (0-100) */
+  percentile: number;
+  /** Number of wins */
+  wins: number;
+  /** Total number of matches */
+  total: number;
+  /** Whether this is a hierarchical tag */
+  isHierarchical?: boolean;
+}
+
+/** Tag ELO score data for model capabilities */
+export interface TagELOData {
+  /** Model ID */
+  modelId: string;
+  /** Hierarchical tag ID */
+  tagId: string;
+  /** Human-readable tag name */
+  tagName: string;
+  /** Tag level (1=pillar, 2=family, 3=leaf) */
+  tagLevel: number;
+  /** Parent tag ID if applicable */
+  parentTagId?: string;
+  /** ELO score for this tag */
+  eloScore: number;
+  /** Number of matches played for this tag */
+  matchesPlayed: number;
+  /** Number of wins */
+  wins: number;
+  /** Number of losses */
+  losses: number;
+  /** Win rate (0-1) */
+  winRate: number;
+  /** Rank among all models for this tag (1 = best) */
+  rank: number;
+  /** Total number of models evaluated for this tag */
+  totalModelsForTag: number;
+  /** Percentile ranking (0-100, 100 = best) */
+  percentile: number;
+  /** Last time this model was evaluated for this tag */
+  lastActive: string;
+}
+
+/** Props for tag performance chart */
+export interface TagPerformanceChartProps {
+  modelId: string;
+  className?: string;
+}
+
+/** Props for evaluation history */
+export interface EvaluationHistoryProps {
+  modelId: string;
+  evaluationHistory?: {
+    evaluations: Array<{
+      tournamentId: string;
+      title: string;
+      prompt: string;
+      result: "win" | "loss" | "ongoing";
+      opponent?: string;
+      createdAt: string;
+    }>;
+    pagination: {
+      page: number;
+      limit: number;
+      total: number;
+      totalPages: number;
+    };
+  };
+  isLoading: boolean;
+}
+
+/** Props for model header */
+export interface ModelHeaderProps {
+  modelStats: {
+    modelScore: {
+      modelId: string;
+      globalScore: number;
+      matchesPlayed: number;
+      wins: number;
+      losses: number;
+      winRate: number;
+      rank: number;
+      lastActive: string;
+    };
+    recentMatches: Array<{
+      tournamentRunId: string;
+      roundNumber: number;
+      winnerModelId: string;
+      loserModelId: string;
+      winnerScoreBefore: number;
+      loserScoreBefore: number;
+      winnerScoreAfter: number;
+      loserScoreAfter: number;
+      createdAt: string;
+    }>;
+    eloHistory: Array<{
+      date: string;
+      score: number;
+      change: number;
+    }>;
+  };
+}
+
+/** Props for performance section */
+export interface PerformanceSectionProps {
+  modelStats: {
+    modelScore: {
+      modelId: string;
+      globalScore: number;
+      matchesPlayed: number;
+      wins: number;
+      losses: number;
+      winRate: number;
+      rank: number;
+      lastActive: string;
+    };
+    recentMatches: Array<{
+      tournamentRunId: string;
+      roundNumber: number;
+      winnerModelId: string;
+      loserModelId: string;
+      winnerScoreBefore: number;
+      loserScoreBefore: number;
+      winnerScoreAfter: number;
+      loserScoreAfter: number;
+      createdAt: string;
+    }>;
+    eloHistory: Array<{
+      date: string;
+      score: number;
+      change: number;
+    }>;
+  };
+}
+
+/** Props for progress indicator */
+export interface ProgressIndicatorProps {
+  phase: TournamentPhase;
+  progress: number; // 0-100
+  currentRound: number;
+  totalRounds: number;
+  winner?: string;
+  className?: string;
+}
+
+/** Props for model card */
+export interface ModelCardProps {
+  model: {
+    id: string;
+    name: string;
+    description: string;
+    capabilities: string[];
+    tags: string[];
+    isNew?: boolean;
+    provider?: string;
+    context_length?: number;
+  };
+  rating: {
+    /** Global ELO score or rating */
+    globalScore: number;
+    /** Total number of matches played */
+    matchesPlayed: number;
+    /** Number of won matches */
+    wins: number;
+    /** Number of lost matches */
+    losses: number;
+    /** Win percentage (0-100) */
+    winRate: number;
+    /** Leaderboard position */
+    rank: number;
+  };
+  isContestant: boolean;
+  isJudge: boolean;
+  canAddContestant: boolean;
+  onToggleContestant: (modelId: string) => void;
+  onSelectJudge: (modelId: string) => void;
+}
+
+/** Props for rich content renderer */
+export interface RichContentRendererProps {
+  content: string;
+  className?: string;
+  maxHeight?: string;
+}
+
+/** Props for recent matches */
+export interface RecentMatchesProps {
+  modelStats: {
+    modelScore: {
+      modelId: string;
+      globalScore: number;
+      matchesPlayed: number;
+      wins: number;
+      losses: number;
+      winRate: number;
+      rank: number;
+      lastActive: string;
+    };
+    recentMatches: Array<{
+      tournamentRunId: string;
+      roundNumber: number;
+      winnerModelId: string;
+      loserModelId: string;
+      winnerScoreBefore: number;
+      loserScoreBefore: number;
+      winnerScoreAfter: number;
+      loserScoreAfter: number;
+      createdAt: string;
+    }>;
+    eloHistory: Array<{
+      date: string;
+      score: number;
+      change: number;
+    }>;
+  };
+}
+
+/** Props for leaderboard stats */
+export interface LeaderboardStatsProps {
+  totalModels: number;
+  totalMatches: number;
+  averageScore: number;
+  isLoading: boolean;
+}
+
+/** Props for model link */
+export interface ModelLinkProps {
+  modelId: string;
+  modelName: string;
+  className?: string;
+}
+
+/** Props for sort button */
+export interface SortButtonProps {
+  label: string;
+  sortKey: "globalScore" | "winRate" | "matchesPlayed";
+  currentSort: "globalScore" | "winRate" | "matchesPlayed";
+  currentOrder: "asc" | "desc";
+  onSort: (sortKey: "globalScore" | "winRate" | "matchesPlayed") => void;
+}
+
+/** Props for win rate indicator */
+export interface WinRateIndicatorProps {
+  winRate: number;
+  wins: number;
+  losses: number;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+}
+
+/** Props for ELO chart */
+export interface ELOChartProps {
+  eloHistory: Array<{
+    date: string;
+    score: number;
+    change: number;
+  }>;
+}
+
+/** Props for markdown renderer */
+export interface MarkdownRendererProps {
+  content: string;
+  className?: string;
+  maxHeight?: string;
+}

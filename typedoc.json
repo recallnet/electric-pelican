@@ -1,0 +1,58 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "./src/lib/tournament-db.ts",
+    "./src/lib/model-execution.ts",
+    "./src/lib/bracket.ts",
+    "./src/contracts/api.ts",
+    "./src/db/schema.ts",
+    "./src/types/tournament.ts",
+    "./src/types/models.ts"
+  ],
+  "exclude": [
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**",
+    "**/scripts/**",
+    "**/priority-job-queue.ts.disabled"
+  ],
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "notDocumented": true
+  },
+  "requiredToBeDocumented": [
+    "Class",
+    "Interface",
+    "Function",
+    "TypeAlias",
+    "Enum",
+    "Variable",
+    "Parameter"
+  ],
+  "out": "docs",
+  "readme": "none",
+  "cleanOutputDir": true,
+  "includeVersion": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "logLevel": "Verbose",
+  "skipErrorChecking": true,
+  "disableGit": true,
+  "disableSources": true,
+  "blockTags": [
+    "@file",
+    "@description",
+    "@const",
+    "@example",
+    "@param",
+    "@returns",
+    "@throws",
+    "@type",
+    "@deprecated",
+    "@remarks"
+  ]
+}

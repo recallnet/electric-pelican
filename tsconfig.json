@@ -1,0 +1,53 @@
+{
+  "compilerOptions": {
+    "target": "ES2017",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitOverride": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "types": ["jest", "node", "jest-axe", "@testing-library/jest-dom"],
+    "incremental": true,
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    "__tests__/**/*.ts",
+    "__tests__/**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "drizzle.config.ts",
+    "tests-types/**",
+    "scripts/**",
+    "src/lib/priority-job-queue.ts",
+    "__tests__/lib/router/streaming.test.ts",
+    "__tests__/integration/bracket-persistence.test.ts",
+    "__tests__/lib/tournament-judging-hierarchical.test.ts",
+    "__tests__/setup/database-mocks.ts",
+    "__tests__/lib/router/model-selector.test.ts",
+    "__tests__/performance/hierarchical-elo-performance.test.ts",
+    "__tests__/integration/wizard-flow.test.tsx",
+    "__tests__/lib/streaming-tournament.test.ts"
+  ]
+}
