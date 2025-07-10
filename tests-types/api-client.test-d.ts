@@ -1,7 +1,12 @@
 import { expectType } from "tsd";
 import { typedApi } from "../src/lib/api-client";
-import { ApiContracts } from "../src/contracts/api";
+import type { ProcessedModel } from "../src/types/models";
 
-expectType<Promise<(typeof ApiContracts)["GET /api/models"]["response"]>>(
-  typedApi("GET /api/models", {}),
-);
+// Test that the API client returns the correct inferred type
+expectType<
+  Promise<{
+    models: ProcessedModel[];
+    timestamp: string;
+    cached: boolean;
+  }>
+>(typedApi("GET /api/models", {}));
