@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import useSWR from "swr";
 
-import { TaxonomyTree } from "@/components/taxonomy/TaxonomyTree";
+import { CapabilitiesTreeView } from "@/components/capabilities/CapabilitiesTreeView";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { TAGS } from "@/lib/tag-taxonomy";
 import type { TaxonomyNode } from "@/types/taxonomy";
@@ -186,12 +186,15 @@ export default function TaxonomyPage() {
             </p>
           </div>
 
-          <TaxonomyTree
+          <CapabilitiesTreeView
             nodes={taxonomyTree}
             isLoading={isLoadingLeaderboards}
-            onTagClick={(tagId: string, _name: string) => {
+            onNodeClick={(nodeData) => {
               // Navigate to leaderboard page for this capability
-              window.location.href = `/leaderboard/capability/${tagId}`;
+              const nodeId = nodeData.attributes?.id || nodeData.name;
+              if (nodeId && nodeId !== "root") {
+                window.location.href = `/leaderboard/capability/${nodeId}`;
+              }
             }}
           />
         </GlassPanel>

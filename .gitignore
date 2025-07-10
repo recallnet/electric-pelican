@@ -10,6 +10,8 @@
 !.yarn/sdks
 !.yarn/versions
 
+.agent/tickets/*
+
 # testing
 /coverage
 .nyc_output

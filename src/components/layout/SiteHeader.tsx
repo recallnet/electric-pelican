@@ -103,7 +103,7 @@ export function SiteHeader() {
                 href="/"
                 className="text-display text-brand-black hover:text-brand-blue transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 rounded-md"
               >
-                Pelican
+                Challenge
               </Link>
 
               {/* Mobile Menu Button */}
@@ -147,7 +147,7 @@ export function SiteHeader() {
                   href="/router"
                   className="text-body text-brand-gray-04 hover:text-brand-blue transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 rounded-md px-2 py-1"
                 >
-                  Router
+                  Explore
                 </Link>
               </nav>
             </div>
@@ -258,7 +258,7 @@ export function SiteHeader() {
                 onClick={handleMobileMenuLinkClick}
                 className="block w-full text-body text-brand-gray-04 hover:text-brand-blue transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 rounded-md py-2 px-2"
               >
-                Router
+                Explore
               </Link>
             </nav>
           </div>
