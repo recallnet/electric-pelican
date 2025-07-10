@@ -31,7 +31,7 @@ export function CapabilitiesTreeView({
   nodes,
   isLoading,
   onNodeClick,
-  className
+  className,
 }: CapabilitiesTreeViewProps) {
   const [searchTerm, setSearchTerm] = useState("");
 
@@ -44,7 +44,7 @@ export function CapabilitiesTreeView({
     const flattened: Array<TaxonomyNode & { depth: number }> = [];
 
     const flatten = (nodeList: TaxonomyNode[], depth = 0) => {
-      nodeList.forEach(node => {
+      nodeList.forEach((node) => {
         flattened.push({ ...node, depth });
         if (node.children && node.children.length > 0) {
           flatten(node.children, depth + 1);
@@ -62,9 +62,10 @@ export function CapabilitiesTreeView({
   const filteredNodes = useMemo(() => {
     if (!searchTerm.trim()) return flattenedNodes;
 
-    return flattenedNodes.filter(node =>
-      node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      node.description?.toLowerCase().includes(searchTerm.toLowerCase())
+    return flattenedNodes.filter(
+      (node) =>
+        node.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        node.description?.toLowerCase().includes(searchTerm.toLowerCase()),
     );
   }, [flattenedNodes, searchTerm]);
 
@@ -189,13 +190,15 @@ export function CapabilitiesTreeView({
                     >
                       {/* Capability Name with Hierarchy */}
                       <td className="py-2 lg:py-3 px-2 lg:px-4 w-[35%] lg:w-[40%]">
-                        <div
-                          className="flex items-center"
-                          style={{ paddingLeft: `${indentPx}px` }}
-                        >
+                        <div className="flex items-center" style={{ paddingLeft: `${indentPx}px` }}>
                           <div className={cn("mr-2 lg:mr-3", getLevelIndicator(node.level))}></div>
                           <div className="min-w-0 flex-1">
-                            <h3 className={cn("truncate text-xs lg:text-sm", getLevelTextStyle(node.level))}>
+                            <h3
+                              className={cn(
+                                "truncate text-xs lg:text-sm",
+                                getLevelTextStyle(node.level),
+                              )}
+                            >
                               {node.name}
                             </h3>
                             {node.description && node.level <= 2 && (
@@ -214,7 +217,7 @@ export function CapabilitiesTreeView({
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(`/models/${node.leadingModel!.modelId}`, '_blank');
+                                window.open(`/models/${node.leadingModel!.modelId}`, "_blank");
                               }}
                               className="text-xs lg:text-sm font-medium text-brand-black hover:text-brand-blue transition-colors truncate block w-full text-left"
                               title={node.leadingModel.modelName}
@@ -242,7 +245,9 @@ export function CapabilitiesTreeView({
                             </div>
                           </div>
                         ) : (
-                          <span className="text-xs lg:text-sm text-brand-gray-03 text-right block">—</span>
+                          <span className="text-xs lg:text-sm text-brand-gray-03 text-right block">
+                            —
+                          </span>
                         )}
                       </td>
 
@@ -261,7 +266,9 @@ export function CapabilitiesTreeView({
                             </div>
                           </div>
                         ) : (
-                          <span className="text-xs lg:text-sm text-brand-gray-03 text-right block">—</span>
+                          <span className="text-xs lg:text-sm text-brand-gray-03 text-right block">
+                            —
+                          </span>
                         )}
                       </td>
                     </tr>
@@ -276,11 +283,7 @@ export function CapabilitiesTreeView({
       {/* Mobile Cards */}
       <div className="sm:hidden space-y-3">
         {filteredNodes.map((node) => (
-          <CapabilityCard
-            key={node.id}
-            node={node}
-            onNodeClick={onNodeClick}
-          />
+          <CapabilityCard key={node.id} node={node} onNodeClick={onNodeClick} />
         ))}
       </div>
 

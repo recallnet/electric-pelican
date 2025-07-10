@@ -70,7 +70,10 @@ export function CapabilityCard({ node, onNodeClick }: CapabilityCardProps) {
             </h3>
           </div>
           {node.description && node.level <= 2 && (
-            <p className="text-xs text-brand-gray-03 line-clamp-1" style={{ paddingLeft: `${indent + 24}px` }}>
+            <p
+              className="text-xs text-brand-gray-03 line-clamp-1"
+              style={{ paddingLeft: `${indent + 24}px` }}
+            >
               {node.description}
             </p>
           )}
@@ -90,16 +93,14 @@ export function CapabilityCard({ node, onNodeClick }: CapabilityCardProps) {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    window.open(`/models/${node.leadingModel!.modelId}`, '_blank');
+                    window.open(`/models/${node.leadingModel!.modelId}`, "_blank");
                   }}
                   className="text-sm font-medium text-brand-black hover:text-brand-blue transition-colors truncate block"
                   title={node.leadingModel.modelName}
                 >
                   {node.leadingModel.modelName}
                 </button>
-                <p className="text-xs text-brand-gray-03 truncate">
-                  {node.leadingModel.provider}
-                </p>
+                <p className="text-xs text-brand-gray-03 truncate">{node.leadingModel.provider}</p>
               </div>
             ) : (
               <span className="text-sm text-brand-gray-03">No data</span>
@@ -112,9 +113,7 @@ export function CapabilityCard({ node, onNodeClick }: CapabilityCardProps) {
                 <div className="text-sm font-mono font-semibold text-brand-black">
                   {Math.round(node.leadingModel.eloScore)}
                 </div>
-                <div className="text-xs text-brand-gray-03">
-                  #{node.leadingModel.rank}
-                </div>
+                <div className="text-xs text-brand-gray-03">#{node.leadingModel.rank}</div>
               </div>
             ) : (
               <span className="text-sm text-brand-gray-03">—</span>
@@ -131,7 +130,8 @@ export function CapabilityCard({ node, onNodeClick }: CapabilityCardProps) {
               <span>
                 {node.stats.totalMatches >= 1000
                   ? `${(node.stats.totalMatches / 1000).toFixed(1)}k`
-                  : node.stats.totalMatches} matches
+                  : node.stats.totalMatches}{" "}
+                matches
               </span>
               <span>{node.stats.totalModels} models</span>
             </div>
