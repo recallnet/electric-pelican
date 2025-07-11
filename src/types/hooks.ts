@@ -67,3 +67,38 @@ export interface UseTournamentListReturn {
   /** Function to manually refetch the tournament list */
   refetch: () => void;
 }
+
+/**
+ * Props for the useModelSelection hook
+ */
+export interface UseModelSelectionProps {
+  /** Optional default bracket size */
+  defaultBracketSize?: 4 | 8 | 16;
+  /** Default contestant model IDs to pre-select */
+  defaultContestants?: string[];
+  /** Default judge model ID to pre-select */
+  defaultJudge?: string;
+}
+
+/**
+ * Return type for the useModelSelection hook
+ */
+export interface UseModelSelectionReturn {
+  // State
+  models: ProcessedModel[];
+  loading: boolean;
+  error: string | null;
+  bracketSize: 4 | 8 | 16;
+  selectedContestants: string[];
+  selectedJudge: string | null;
+
+  // Actions
+  handleBracketSizeChange: (newSize: 4 | 8 | 16) => void;
+  handleToggleContestant: (modelId: string) => void;
+  handleSelectJudge: (modelId: string) => void;
+  handleRemoveContestant: (modelId: string) => void;
+  handleRemoveJudge: () => void;
+
+  // Computed
+  isSelectionComplete: boolean;
+}

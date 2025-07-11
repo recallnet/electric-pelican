@@ -21,7 +21,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "sync:models": "node --env-file=.env.development.local --import tsx scripts/sync-openrouter-models.ts",
+    "sync:models": "node --env-file=.env.local --import tsx scripts/sync-openrouter-models.ts",
     "dev-auto-exit": "timeout 30 next dev --turbopack || echo 'Dev server test completed'",
     "types:check": "tsc --noEmit && tsd",
     "types:strict": "tsc --project tsconfig.strict.json --noEmit",

@@ -32,6 +32,16 @@ export const users = pgTable("users", {
 });
 
 /**
+ * Admins table stores admin users by email address.
+ */
+export const admins = pgTable("admins", {
+  id: text("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+/**
  * Models table stores all available models from OpenRouter.
  * Updated periodically via a cron job.
  */

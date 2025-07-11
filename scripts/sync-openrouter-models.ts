@@ -1,7 +1,7 @@
 import dotenv from "dotenv";
 
 // Load environment variables from .env.development.local
-dotenv.config({ path: ".env.development.local" });
+dotenv.config({ path: ".env.local" });
 
 import { db } from "../db";
 import { models } from "../db/schema";
@@ -9,7 +9,7 @@ import { fetchOpenRouterModels } from "../src/lib/openrouter";
 import { eq } from "drizzle-orm";
 
 /**
- * Sync OpenRouter models to our local SQLite database.
+ * Sync OpenRouter models to our local database.
  * This script should be run periodically (e.g., daily) to keep our model data fresh.
  */
 async function syncModels() {
@@ -18,8 +18,18 @@ async function syncModels() {
     const openRouterModels = await fetchOpenRouterModels({ limit: 1000 });
     console.log(`Fetched ${openRouterModels.length} models from OpenRouter`);
 
+    // Get all existing models from database
+    const existingModels = await db.select({ id: models.id }).from(models);
+    const existingModelIds = new Set(existingModels.map((m) => m.id));
+
+    // Get models from OpenRouter (excluding auto-chooser)
+    const openRouterModelIds = new Set(
+      openRouterModels.filter((model) => model.id !== "openrouter/auto").map((model) => model.id),
+    );
+
     let successCount = 0;
     let errorCount = 0;
+    let markedUnavailableCount = 0;
 
     // Process each model with retry logic
     for (const model of openRouterModels) {
@@ -52,7 +62,7 @@ async function syncModels() {
           const is_new = model.created > Math.floor(Date.now() / 1000) - 30 * 24 * 60 * 60; // New if created in last 30 days
 
           if (existing) {
-            // Update existing model
+            // Update existing model and mark as available since it's in OpenRouter
             await db
               .update(models)
               .set({
@@ -68,6 +78,11 @@ async function syncModels() {
                 created: new Date(model.created * 1000), // Convert Unix timestamp to Date
                 last_updated: now,
                 raw_data: model,
+                // Mark as available since it's returned by OpenRouter
+                is_available: true,
+                // Reset unavailable reason if it was previously unavailable
+                unavailable_reason: null,
+                marked_unavailable_at: null,
               })
               .where(eq(models.id, model.id));
           } else {
@@ -86,6 +101,8 @@ async function syncModels() {
               created: new Date(model.created * 1000), // Convert Unix timestamp to Date
               last_updated: now,
               raw_data: model,
+              // New models are available by default
+              is_available: true,
             });
           }
         });
@@ -106,7 +123,39 @@ async function syncModels() {
       }
     }
 
+    // Mark models as unavailable if they're not returned by OpenRouter
+    const modelsToMarkUnavailable = Array.from(existingModelIds).filter(
+      (id) => !openRouterModelIds.has(id),
+    );
+
+    if (modelsToMarkUnavailable.length > 0) {
+      console.log(
+        `Marking ${modelsToMarkUnavailable.length} models as unavailable (removed from OpenRouter)`,
+      );
+
+      const now = new Date();
+
+      for (const modelId of modelsToMarkUnavailable) {
+        try {
+          await db
+            .update(models)
+            .set({
+              is_available: false,
+              unavailable_reason: "Model removed from OpenRouter API",
+              marked_unavailable_at: now,
+            })
+            .where(eq(models.id, modelId));
+          markedUnavailableCount++;
+        } catch (error) {
+          console.error(`Failed to mark model ${modelId} as unavailable:`, error);
+        }
+      }
+    }
+
     console.log(`Successfully synced ${successCount} models to database`);
+    if (markedUnavailableCount > 0) {
+      console.log(`Marked ${markedUnavailableCount} models as unavailable`);
+    }
     if (errorCount > 0) {
       console.log(`Failed to sync ${errorCount} models due to errors`);
     }

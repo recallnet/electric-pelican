@@ -29,6 +29,13 @@
       "when": 1751059200000,
       "tag": "0003_update_router_results",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1751059400000,
+      "tag": "0004_add_admins_table",
+      "breakpoints": true
     }
   ]
 }
