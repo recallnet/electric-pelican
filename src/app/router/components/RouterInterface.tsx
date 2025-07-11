@@ -24,7 +24,7 @@ export default function RouterInterface() {
   const [executionId, setExecutionId] = useState<string | null>(null);
   const [hasExecutionStarted, setHasExecutionStarted] = useState(false);
 
-  const { state, actions } = useRouterState();
+  const { state, actions, isAuthenticated } = useRouterState();
 
   // Progress streaming for execution
   const {
@@ -133,6 +133,7 @@ export default function RouterInterface() {
         onPromptChange={actions.setPrompt}
         onAnalyze={handleAnalyze}
         onClear={handleReset}
+        isAuthenticated={isAuthenticated}
       />
 
       {/* Results Section - Show after analysis starts */}
@@ -157,37 +158,52 @@ export default function RouterInterface() {
       )}
 
       {/* Analysis Results Summary & Execute Button */}
-      {state.analysisResult && !state.isAnalyzing && !hasExecutionStarted && (
-        <GlassPanel className="p-6">
+      {state.analysisResult && !isExecuting && (
+        <GlassPanel className="p-6 bg-gradient-to-r from-blue-50 to-purple-50">
           <div className="text-center space-y-4">
-            <h4 className="font-medium text-gray-900 mb-2">Analysis Complete</h4>
-            <div className="flex flex-wrap justify-center gap-4 text-sm text-gray-600 mb-4">
-              <span>📊 {state.optimizedWorkflow?.length || 0} workflow steps identified</span>
-              <span>🎯 {state.singleModelRecommendation ? "1" : "0"} model recommended</span>
-              <span>⚡ {state.analysisResult.workflow.length} capabilities analyzed</span>
+            <div className="space-y-2">
+              <h3 className="text-lg font-semibold text-gray-800">Analysis Complete! 🎉</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="bg-white/60 p-3 rounded-lg">
+                  <div className="font-medium text-gray-700">Workflow Steps</div>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {state.optimizedWorkflow?.length || 0}
+                  </div>
+                </div>
+                <div className="bg-white/60 p-3 rounded-lg">
+                  <div className="font-medium text-gray-700">Analysis Time</div>
+                  <div className="text-2xl font-bold text-green-600">
+                    {state.analysisResult.analysisTime || 0}ms
+                  </div>
+                </div>
+                <div className="bg-white/60 p-3 rounded-lg">
+                  <div className="font-medium text-gray-700">Complexity</div>
+                  <div className="text-2xl font-bold text-purple-600 capitalize">
+                    {state.analysisResult.estimatedComplexity || "Unknown"}
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {canExecute && (
+            <div className="flex justify-center gap-3">
               <Button
                 onClick={handleExecute}
+                disabled={!canExecute}
                 size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 text-lg"
+                className="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
               >
-                🚀 Execute Both Approaches
+                {canExecute ? "🚀 Execute Router" : "⏳ Preparing..."}
               </Button>
-            )}
-
-            {(state.selectionError || state.analysisError) && (
-              <div className="text-red-600 text-sm mt-2">
-                Unable to execute: {state.selectionError || state.analysisError}
-              </div>
-            )}
+              <Button onClick={handleReset} variant="outline" size="lg" className="px-6 py-3">
+                🔄 Reset
+              </Button>
+            </div>
           </div>
         </GlassPanel>
       )}
 
       {/* Execution Progress */}
-      {hasExecutionStarted && executionId && (
+      {(isExecuting || singleResult || workflowResult) && executionId && (
         <ExecutionProgress
           executionId={executionId}
           singleProgress={singleProgress}
@@ -195,13 +211,12 @@ export default function RouterInterface() {
           intermediateResults={intermediateResults}
           singleResult={singleResult}
           workflowResult={workflowResult}
-          isExecuting={isExecuting}
           isConnected={isConnected}
+          isExecuting={isExecuting}
           onCancel={cancelExecution}
         />
       )}
 
-      {/* Streaming Error */}
       {streamingError && (
         <GlassPanel className="p-4 border-red-200 bg-red-50">
           <div className="text-red-800 text-sm">

@@ -40,7 +40,7 @@ export function JudgePromptSection({
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
-        Juging Instructions
+        Judge Instructions
       </button>
 
       {showAdvanced && (

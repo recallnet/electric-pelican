@@ -2,12 +2,15 @@
  * @file Unified router API endpoint for complete prompt analysis and model selection.
  * @description Handles POST requests to analyze user prompts, break them into workflow steps,
  * and select optimal models for each step using hierarchical ELO scores.
+ * Requires authentication to access.
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+import { withProtectedRoute } from "@/lib/auth/route-protection";
 import type { RouterAnalysisResponse } from "@/types/api-router";
+import type { AuthenticatedUser } from "@/types/auth";
 
 import { analyzePromptWithAI } from "./lib/analysis";
 import { assignModelsToWorkflow, selectSingleModel } from "./lib/selection";
@@ -24,10 +27,12 @@ const analyzeRequestSchema = z.object({
 });
 
 /**
- * POST /api/router/analyze
- * Complete router analysis: prompt → workflow steps → model selection
+ * Protected POST handler for router analysis
  */
-export async function POST(request: NextRequest): Promise<NextResponse<RouterAnalysisResponse>> {
+async function analyzeHandler(
+  request: NextRequest,
+  { user }: { user: AuthenticatedUser },
+): Promise<NextResponse<RouterAnalysisResponse>> {
   const startTime = Date.now();
 
   try {
@@ -47,7 +52,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<RouterAna
 
     const { prompt } = validation.data;
 
-    console.log(`[router] Analyzing prompt: ${prompt.substring(0, 100)}...`);
+    console.log(`[router] User ${user.id} analyzing prompt: ${prompt.substring(0, 100)}...`);
 
     // Step 1: Use AI to analyze prompt and break into workflow steps
     const workflowAnalysis = await analyzePromptWithAI(prompt);
@@ -61,7 +66,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<RouterAna
     const analysisTime = Date.now() - startTime;
 
     console.log(
-      `[router] Analysis complete in ${analysisTime}ms: ${workflowWithModels.length} steps, dominant: ${workflowAnalysis.dominantCapability}`,
+      `[router] Analysis complete for user ${user.id} in ${analysisTime}ms: ${workflowWithModels.length} steps, dominant: ${workflowAnalysis.dominantCapability}`,
     );
 
     return NextResponse.json({
@@ -75,7 +80,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<RouterAna
       },
     });
   } catch (error) {
-    console.error("[router] Complete analysis failed:", error);
+    console.error(`[router] Complete analysis failed for user ${user.id}:`, error);
 
     return NextResponse.json(
       {
@@ -88,6 +93,13 @@ export async function POST(request: NextRequest): Promise<NextResponse<RouterAna
 }
 
 /**
+ * POST /api/router/analyze
+ * Complete router analysis: prompt → workflow steps → model selection
+ * Requires authentication
+ */
+export const POST = withProtectedRoute(analyzeHandler);
+
+/**
  * GET /api/router/analyze
  * Return API documentation
  */
@@ -96,6 +108,7 @@ export async function GET(): Promise<NextResponse> {
     endpoint: "/api/router/analyze",
     method: "POST",
     description: "Complete router analysis: prompt → workflow steps → model selection",
+    authentication: "Required - Bearer token in Authorization header",
     parameters: {
       prompt: {
         type: "string",

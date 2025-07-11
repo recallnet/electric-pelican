@@ -133,14 +133,14 @@ describe("SiteHeader", () => {
         expect(mobileNav).toBeInTheDocument();
 
         // Check for mobile-specific navigation links
-        const dashboardLinks = screen.getAllByRole("link", { name: /dashboard/i });
         const leaderboardLinks = screen.getAllByRole("link", { name: /leaderboard/i });
         const usersLinks = screen.getAllByRole("link", { name: /users/i });
+        const capabilitiesLinks = screen.getAllByRole("link", { name: /capabilities/i });
 
         // Should have both desktop (hidden) and mobile versions
-        expect(dashboardLinks).toHaveLength(2);
         expect(leaderboardLinks).toHaveLength(2);
         expect(usersLinks).toHaveLength(2);
+        expect(capabilitiesLinks).toHaveLength(2);
       });
     });
 
@@ -157,10 +157,10 @@ describe("SiteHeader", () => {
 
       // Click a navigation link in the mobile menu
       const mobileNav = screen.getByRole("navigation", { name: /main navigation/i });
-      const dashboardLink = mobileNav.querySelector('a[href="/dashboard"]');
-      expect(dashboardLink).toBeInTheDocument();
+      const leaderboardLink = mobileNav.querySelector('a[href="/leaderboard"]');
+      expect(leaderboardLink).toBeInTheDocument();
 
-      fireEvent.click(dashboardLink!);
+      fireEvent.click(leaderboardLink!);
 
       await waitFor(() => {
         expect(mobileMenuContainer).toHaveClass("opacity-0", "pointer-events-none");

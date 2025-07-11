@@ -7,6 +7,16 @@
 import { NextRequest } from "next/server";
 import { POST as unifiedRouterRoute } from "@/app/api/router/analyze/route";
 
+// Mock the Privy authentication
+jest.mock("@/lib/auth/privy", () => ({
+  getAuthenticatedUser: jest.fn(() =>
+    Promise.resolve({
+      sub: "test-user-id",
+      email: "test@example.com",
+    }),
+  ),
+}));
+
 describe("Unified Router API Integration", () => {
   beforeEach(() => {
     // Mock fetch for ELO lookups

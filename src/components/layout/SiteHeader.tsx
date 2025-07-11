@@ -120,12 +120,6 @@ export function SiteHeader() {
               {/* Desktop Navigation */}
               <nav className="hidden sm:flex items-center gap-4">
                 <Link
-                  href="/dashboard"
-                  className="text-body text-brand-gray-04 hover:text-brand-blue transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 rounded-md px-2 py-1"
-                >
-                  Dashboard
-                </Link>
-                <Link
                   href="/leaderboard"
                   className="text-body text-brand-gray-04 hover:text-brand-blue transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 rounded-md px-2 py-1"
                 >
@@ -158,27 +152,33 @@ export function SiteHeader() {
                 ready ? (
                   authenticated ? (
                     <div className="flex items-center gap-3">
-                      {getAvatarUrl() ? (
-                        <Image
-                          src={getAvatarUrl()!}
-                          alt={`${getDisplayName()} avatar`}
-                          width={32}
-                          height={32}
-                          className="rounded-full border-2 border-brand-blue"
-                        />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full border-2 border-brand-blue bg-brand-blue/10 flex items-center justify-center">
-                          <span className="text-xs font-medium text-brand-blue">
-                            {getDisplayName().charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                      <span
-                        className="hidden sm:inline text-label text-brand-gray-04"
-                        aria-label="User display name"
+                      <Link
+                        href="/dashboard"
+                        className="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 rounded-lg p-1 -m-1"
+                        aria-label={`Go to ${getDisplayName()}'s dashboard`}
                       >
-                        {getDisplayName()}
-                      </span>
+                        {getAvatarUrl() ? (
+                          <Image
+                            src={getAvatarUrl()!}
+                            alt={`${getDisplayName()} avatar`}
+                            width={32}
+                            height={32}
+                            className="rounded-full border-2 border-brand-blue transition-transform duration-200 hover:scale-105"
+                          />
+                        ) : (
+                          <div className="w-8 h-8 rounded-full border-2 border-brand-blue bg-brand-blue/10 flex items-center justify-center transition-transform duration-200 hover:scale-105">
+                            <span className="text-xs font-medium text-brand-blue">
+                              {getDisplayName().charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        )}
+                        <span
+                          className="hidden sm:inline text-label text-brand-gray-04 transition-colors duration-200 hover:text-brand-blue"
+                          aria-label="User display name"
+                        >
+                          {getDisplayName()}
+                        </span>
+                      </Link>
                       <ElectricButton
                         size="sm"
                         variant="outline"
@@ -225,13 +225,6 @@ export function SiteHeader() {
               aria-label="Main navigation"
               className="p-4 space-y-3"
             >
-              <Link
-                href="/dashboard"
-                onClick={handleMobileMenuLinkClick}
-                className="block w-full text-body text-brand-gray-04 hover:text-brand-blue transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 rounded-md py-2 px-2"
-              >
-                Dashboard
-              </Link>
               <Link
                 href="/leaderboard"
                 onClick={handleMobileMenuLinkClick}

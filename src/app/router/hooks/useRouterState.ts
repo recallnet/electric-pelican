@@ -8,6 +8,7 @@
 // @ts-nocheck
 // Disable TypeScript checking for this file to avoid strict optional property issues
 
+import { usePrivy } from "@privy-io/react-auth";
 import { useCallback, useState } from "react";
 
 /**
@@ -18,6 +19,8 @@ import { useCallback, useState } from "react";
  * Router state management hook
  */
 export function useRouterState() {
+  const { getAccessToken, authenticated, login } = usePrivy();
+
   const [state, setState] = useState({
     currentPrompt: "",
     isAnalyzing: false,
@@ -39,72 +42,92 @@ export function useRouterState() {
   }, []);
 
   /**
-   * Analyze the prompt using the unified API
+   * Analyze the prompt using the unified API (requires authentication)
    */
-  const analyzePrompt = useCallback(async (prompt: string) => {
-    // Set analyzing state
-    setState((prev) => ({
-      ...prev,
-      isAnalyzing: true,
-      isOptimizing: false,
-      analysisError: null,
-      selectionError: null,
-      analysisResult: null,
-      singleModelRecommendation: null,
-      optimizedWorkflow: null,
-    }));
-
-    try {
-      const response = await fetch("/api/router/analyze", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Analysis failed: ${response.statusText}`);
+  const analyzePrompt = useCallback(
+    async (prompt: string) => {
+      // Check authentication first
+      if (!authenticated) {
+        login();
+        return;
       }
 
-      const result = await response.json();
+      // Set analyzing state
+      setState((prev) => ({
+        ...prev,
+        isAnalyzing: true,
+        isOptimizing: false,
+        analysisError: null,
+        selectionError: null,
+        analysisResult: null,
+        singleModelRecommendation: null,
+        optimizedWorkflow: null,
+      }));
 
-      if (!result.success) {
-        throw new Error("Analysis failed");
-      }
+      try {
+        // Get authentication token
+        const token = await getAccessToken();
 
-      // Set success state with all required fields
-      setState((prev) => {
-        const newState = {
-          ...prev,
-          singleModelRecommendation: result.data.singleModelRecommendation,
-          optimizedWorkflow: result.data.workflow,
-          analysisResult: {
-            workflow: result.data.workflow,
-            singleModelRecommendation: result.data.singleModelRecommendation,
-            analysisTime: result.data.analysisTime,
-            estimatedComplexity: result.data.estimatedComplexity,
+        if (!token) {
+          throw new Error("Failed to get authentication token");
+        }
+
+        const response = await fetch("/api/router/analyze", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          isAnalyzing: false,
-          analysisError: null,
-          selectionError: null,
-        };
+          body: JSON.stringify({ prompt }),
+        });
 
-        return newState;
-      });
-    } catch (error) {
-      console.error("Router analysis failed:", error);
-      setState((prev) => {
-        const errorState = {
-          ...prev,
-          analysisError: error instanceof Error ? error.message : "Analysis failed",
-          isAnalyzing: false,
-          analysisResult: null,
-          singleModelRecommendation: null,
-          optimizedWorkflow: null,
-        };
-        return errorState;
-      });
-    }
-  }, []);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Analysis failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+
+        if (!result.success) {
+          throw new Error("Analysis failed");
+        }
+
+        // Set success state with all required fields
+        setState((prev) => {
+          const newState = {
+            ...prev,
+            singleModelRecommendation: result.data.singleModelRecommendation,
+            optimizedWorkflow: result.data.workflow,
+            analysisResult: {
+              workflow: result.data.workflow,
+              singleModelRecommendation: result.data.singleModelRecommendation,
+              analysisTime: result.data.analysisTime,
+              estimatedComplexity: result.data.estimatedComplexity,
+            },
+            isAnalyzing: false,
+            analysisError: null,
+            selectionError: null,
+          };
+
+          return newState;
+        });
+      } catch (error) {
+        console.error("Router analysis failed:", error);
+        setState((prev) => {
+          const errorState = {
+            ...prev,
+            analysisError: error instanceof Error ? error.message : "Analysis failed",
+            isAnalyzing: false,
+            analysisResult: null,
+            singleModelRecommendation: null,
+            optimizedWorkflow: null,
+          };
+          return errorState;
+        });
+      }
+    },
+    [authenticated, login, getAccessToken],
+  );
 
   /**
    * Select a specific workflow step
@@ -150,5 +173,6 @@ export function useRouterState() {
       toggleAlternatives,
       reset,
     },
+    isAuthenticated: authenticated,
   };
 }

@@ -17,7 +17,7 @@ export default function RouterPage() {
         <div className="max-w-7xl mx-auto">
           {/* Page Header */}
           <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-gray-900 mb-4">AI Router</h1>
+            <h1 className="text-4xl font-bold text-gray-900 mb-4">Explorer</h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               Enter your prompt to get intelligent model recommendations based on real evaluation
               data. Compare workflow breakdown vs single-model approaches.

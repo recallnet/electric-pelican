@@ -2,6 +2,7 @@
  * Auth-related type definitions
  */
 import { JWTPayload } from "jose";
+import { NextRequest, NextResponse } from "next/server";
 
 import type { DrizzleInstance, Schema } from "@/types/db";
 
@@ -50,3 +51,20 @@ export interface DbLoaded {
   schema: Schema;
   eq: typeof import("drizzle-orm").eq;
 }
+
+/**
+ * User type for authenticated requests
+ */
+export interface AuthenticatedUser {
+  id: string;
+  email?: string;
+  wallet?: string;
+}
+
+/**
+ * Handler type for protected routes
+ */
+export type ProtectedRouteHandler = (
+  request: NextRequest,
+  context: { user: AuthenticatedUser },
+) => Promise<NextResponse>;

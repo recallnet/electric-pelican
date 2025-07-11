@@ -3,11 +3,12 @@ import "./globals.css";
 import type { Metadata } from "next";
 
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { WelcomeModal } from "@/components/welcome/WelcomeModal";
 
 import Providers from "./providers";
 
 export const metadata: Metadata = {
-  title: "Pelican - Taste-Driven Routing",
+  title: "Experiments - Taste-Driven Routing",
   description: "Curate agents, crown winners, route by expert taste.",
 };
 
@@ -27,6 +28,7 @@ export default function RootLayout({
           <footer className="p-4 text-center text-label text-brand-gray-02 border-t border-white/10">
             Recall (Labs)
           </footer>
+          <WelcomeModal />
         </Providers>
       </body>
     </html>

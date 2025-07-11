@@ -4,6 +4,7 @@ import { format } from "date-fns";
 import Image from "next/image";
 import Link from "next/link";
 
+import { ClickableTagsDisplay } from "@/components/ui/clickable-tag";
 import { GlassPanel } from "@/components/ui/glass-panel";
 import { type UsersTableProps } from "@/types/components";
 
@@ -76,6 +77,26 @@ function AuthorDisplay({
   );
 }
 
+/**
+ * Display user interests/tags component
+ */
+function UserInterestsDisplay({ tags }: { tags: string[] }) {
+  if (!tags || tags.length === 0) {
+    return <span className="text-brand-gray-03 text-xs italic">No interests</span>;
+  }
+
+  return (
+    <ClickableTagsDisplay
+      tags={tags} // Pass as hierarchical tags first
+      legacyTags={[]} // Let the component handle hierarchical vs legacy detection
+      size="xs"
+      variant="secondary"
+      maxTags={3}
+      className="flex-wrap"
+    />
+  );
+}
+
 export function UsersTable({ users }: UsersTableProps) {
   if (users.length === 0) {
     return <p className="text-brand-gray-03 italic">No users found.</p>;
@@ -92,6 +113,9 @@ export function UsersTable({ users }: UsersTableProps) {
               </th>
               <th className="text-left py-3 px-4 text-xs font-medium text-brand-black uppercase tracking-wide">
                 Evaluations
+              </th>
+              <th className="text-left py-3 px-4 text-xs font-medium text-brand-black uppercase tracking-wide">
+                Interests
               </th>
               <th className="text-left py-3 px-4 text-xs font-medium text-brand-black uppercase tracking-wide">
                 Joined
@@ -112,6 +136,9 @@ export function UsersTable({ users }: UsersTableProps) {
                   <span className="text-sm text-brand-black font-medium">
                     {user.evaluationsCreated}
                   </span>
+                </td>
+                <td className="py-3 px-4 max-w-xs">
+                  <UserInterestsDisplay tags={user.topTags} />
                 </td>
                 <td className="py-3 px-4">
                   <div className="text-xs text-brand-gray-04">

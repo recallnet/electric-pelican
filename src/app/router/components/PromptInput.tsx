@@ -5,6 +5,7 @@
  * @description Handles user prompt input and triggers analysis
  */
 
+import { usePrivy } from "@privy-io/react-auth";
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,7 @@ import { GlassPanel } from "@/components/ui/glass-panel";
 import type { PromptInputProps } from "@/types/router-ui";
 
 const DEFAULT_PROMPT =
-  "Compose two accounts of the same moonlit desert caravan—first as a formal diplomatic briefing to a monarch, then retold as a comforting bedtime story for the caravan leader’s young daughter. Finally, craft me a perfect SVG that represents the scene of the story.";
+  "Compose two accounts of the same moonlit desert caravan—first as a formal diplomatic briefing to a monarch, then retold as a comforting bedtime story for the caravan leader's young daughter. Finally, craft me a perfect SVG that represents the scene of the story.";
 
 /**
  * Prompt input component with analysis trigger
@@ -25,7 +26,9 @@ export default function PromptInput({
   onAnalyze,
   onClear,
   readOnly = false,
-}: PromptInputProps & { readOnly?: boolean }) {
+  isAuthenticated = false,
+}: PromptInputProps & { readOnly?: boolean; isAuthenticated?: boolean }) {
+  const { login } = usePrivy();
   const [localPrompt, setLocalPrompt] = useState(promptInput || DEFAULT_PROMPT);
 
   // Update local prompt when prop changes (but only if it's not empty)
@@ -48,6 +51,11 @@ export default function PromptInput({
   };
 
   const handleAnalyze = async () => {
+    if (!isAuthenticated) {
+      login();
+      return;
+    }
+
     if (localPrompt && localPrompt.trim()) {
       await onAnalyze(localPrompt.trim());
     }
@@ -95,7 +103,9 @@ export default function PromptInput({
           />
 
           <div className="text-xs text-gray-500 text-center">
-            Press Enter to analyze • Shift+Enter for new line
+            {isAuthenticated
+              ? "Press Enter to analyze • Shift+Enter for new line"
+              : "Sign in to analyze your prompt • Shift+Enter for new line"}
           </div>
 
           {/* Error Display */}
@@ -113,6 +123,8 @@ export default function PromptInput({
                   <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
                   Analyzing...
                 </>
+              ) : !isAuthenticated ? (
+                <>🔐 Sign In to Analyze</>
               ) : (
                 <>🔍 Analyze Prompt</>
               )}
