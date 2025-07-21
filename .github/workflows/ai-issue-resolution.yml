@@ -150,18 +150,25 @@ jobs:
             echo "" >> /tmp/attachment-info.txt
 
             # Process each attachment
+            echo "DEBUG: Starting download loop..."
+            echo "DEBUG: Number of URLs to process: $(wc -l < /tmp/attachments.txt)"
             while IFS= read -r url; do
+              echo "DEBUG: Inside while loop, processing: $url"
               if [ -n "$url" ]; then
+                echo "DEBUG: Processing URL: $url"
                 echo "DEBUG: Processing URL: $url" >> /tmp/attachment-info.txt
 
                 # Extract filename from URL
                 filename=$(basename "$url" | cut -d'?' -f1)
+                echo "DEBUG: Extracted filename: $filename"
                 echo "DEBUG: Extracted filename: $filename" >> /tmp/attachment-info.txt
 
                 # Download the file with verbose output
+                echo "DEBUG: Attempting to download $url to /tmp/attachments/$filename"
                 echo "DEBUG: Attempting to download $url to /tmp/attachments/$filename" >> /tmp/attachment-info.txt
                 curl_result=$(curl -s -L -w "%{http_code}" "$url" -o "/tmp/attachments/$filename")
                 http_code="${curl_result: -3}"
+                echo "DEBUG: curl HTTP code: $http_code"
                 echo "DEBUG: curl HTTP code: $http_code" >> /tmp/attachment-info.txt
 
                 if [ "$http_code" = "200" ]; then
