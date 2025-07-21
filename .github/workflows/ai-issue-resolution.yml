@@ -174,10 +174,15 @@ jobs:
                 # Debug: Show curl response for debugging
                 echo "DEBUG: Full curl response: $curl_result"
                 echo "DEBUG: File size after download: $(wc -c < "/tmp/attachments/$filename" 2>/dev/null || echo '0') bytes"
+                echo "DEBUG: File contents (first 100 chars):"
+                head -c 100 "/tmp/attachments/$filename" 2>/dev/null || echo "Could not read file"
+                echo ""
 
-                if [ "$http_code" = "200" ]; then
-                  echo "Downloaded: $filename" >> /tmp/attachment-info.txt
-                  echo "DEBUG: File size: $(wc -c < "/tmp/attachments/$filename") bytes" >> /tmp/attachment-info.txt
+                # Check if we actually got file content (even if HTTP code wasn't 200)
+                file_size=$(wc -c < "/tmp/attachments/$filename" 2>/dev/null || echo "0")
+                if [ "$file_size" -gt 0 ]; then
+                  echo "Downloaded: $filename (size: $file_size bytes)" >> /tmp/attachment-info.txt
+                  echo "DEBUG: File size: $file_size bytes" >> /tmp/attachment-info.txt
                   echo "DEBUG: File type: $(file -b "/tmp/attachments/$filename")" >> /tmp/attachment-info.txt
 
                   # Check if it's a text file we can read
@@ -241,7 +246,13 @@ jobs:
         if: steps.check-access.outputs.has-access == 'true'
         run: |
           mkdir -p /tmp/claude-prompts
-          cat > /tmp/claude-prompts/ai-resolution-prompt.txt << 'EOF'
+
+          # Debug: Show what's in the attachment info file
+          echo "DEBUG: Contents of /tmp/attachment-info.txt:"
+          cat /tmp/attachment-info.txt || echo "File does not exist"
+          echo "DEBUG: End of attachment info"
+
+          cat > /tmp/claude-prompts/ai-resolution-prompt.txt << EOF
           You are an AI assistant tasked with resolving GitHub issues. Your goal is to analyze the issue, implement a fix, and create a pull request.
 
           PROJECT CONTEXT:
