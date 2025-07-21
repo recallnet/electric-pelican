@@ -78,6 +78,59 @@ jobs:
           }
           EOF
 
+      - name: Extract and download file attachments from issue
+        if: steps.check-access.outputs.has-access == 'true'
+        run: |
+          # Extract file attachments from issue description
+          echo "${{ github.event.issue.body }}" > /tmp/issue-body.txt
+
+          # Create directories for attachments
+          mkdir -p /tmp/attachments
+          mkdir -p /tmp/attachment-contents
+
+          # Look for image attachments and other file links
+          grep -o 'https://user-images\.githubusercontent\.com/[^)]*' /tmp/issue-body.txt > /tmp/attachments.txt || true
+          grep -o 'https://github\.com/[^)]*' /tmp/issue-body.txt >> /tmp/attachments.txt || true
+
+          # Download and process each attachment
+          if [ -s /tmp/attachments.txt ]; then
+            echo "Found file attachments:" > /tmp/attachment-info.txt
+            cat /tmp/attachments.txt >> /tmp/attachment-info.txt
+            echo "" >> /tmp/attachment-info.txt
+
+            # Process each attachment
+            while IFS= read -r url; do
+              if [ -n "$url" ]; then
+                # Extract filename from URL
+                filename=$(basename "$url" | cut -d'?' -f1)
+
+                # Download the file
+                if curl -s -L "$url" -o "/tmp/attachments/$filename"; then
+                  echo "Downloaded: $filename" >> /tmp/attachment-info.txt
+
+                  # Check if it's a text file we can read
+                  file_type=$(file -b "/tmp/attachments/$filename" | cut -d',' -f1)
+                  if [[ "$file_type" == *"text"* ]] || [[ "$filename" =~ \.(txt|md|json|js|ts|jsx|tsx|py|java|c|cpp|h|hpp|css|html|xml|yaml|yml|toml|ini|conf|log|sh|bash|zsh|fish)$ ]]; then
+                    echo "=== CONTENTS OF $filename ===" > "/tmp/attachment-contents/$filename.txt"
+                    cat "/tmp/attachments/$filename" >> "/tmp/attachment-contents/$filename.txt"
+                    echo "=== END OF $filename ===" >> "/tmp/attachment-contents/$filename.txt"
+                    echo "Text file contents available for: $filename" >> /tmp/attachment-info.txt
+                  else
+                    echo "Binary file (image/document): $filename" >> /tmp/attachment-info.txt
+                  fi
+                else
+                  echo "Failed to download: $filename" >> /tmp/attachment-info.txt
+                fi
+              fi
+            done < /tmp/attachments.txt
+
+            echo "" >> /tmp/attachment-info.txt
+            echo "Text file contents are available in /tmp/attachment-contents/" >> /tmp/attachment-info.txt
+            echo "Binary files are available in /tmp/attachments/" >> /tmp/attachment-info.txt
+          else
+            echo "No file attachments found in issue." > /tmp/attachment-info.txt
+          fi
+
       - name: Create AI resolution prompt
         if: steps.check-access.outputs.has-access == 'true'
         run: |
@@ -85,27 +138,41 @@ jobs:
           cat > /tmp/claude-prompts/ai-resolution-prompt.txt << 'EOF'
           You are an AI assistant tasked with resolving GitHub issues. Your goal is to analyze the issue, implement a fix, and create a pull request.
 
-          CONTEXT:
+          PROJECT CONTEXT:
           - Repository: ${GITHUB_REPOSITORY}
           - Issue Number: ${{ github.event.issue.number }}
           - Issue Title: "${{ github.event.issue.title }}"
           - Issue Description: "${{ github.event.issue.body }}"
 
+          CRITICAL: Always read CLAUDE.md first for project context and development guidelines.
+
+          FILE ATTACHMENTS INFO:
+          $(cat /tmp/attachment-info.txt)
+
           TASK:
-          1. First, get the issue details using mcp__github__get_issue
-          2. Check if a PR already exists for this issue using mcp__github__list_pull_requests
-          3. If a PR already exists, do not create another one - stop here
-          4. Analyze the issue description and any attached files
-          5. Understand the codebase structure using available tools
-          6. Implement the fix by:
+          1. FIRST: Read CLAUDE.md to understand project structure, development commands, and coding standards
+          2. Get the issue details using mcp__github__get_issue
+          3. Check if a PR already exists for this issue using mcp__github__list_pull_requests
+          4. If a PR already exists, do not create another one - stop here
+          5. Analyze the issue description and any attached files
+          6. Understand the codebase structure using available tools
+          7. Implement the fix by:
              - Creating a new branch (use format: ai-fix/issue-{number})
              - Making the necessary code changes
              - Committing the changes
              - Creating a pull request with a descriptive title and body
-          7. The PR should:
+          8. The PR should:
              - Reference the original issue
              - Include a clear description of the fix
              - Be ready for review
+
+          FILE ATTACHMENTS:
+          - Text files have been downloaded and their contents are available in /tmp/attachment-contents/
+          - Binary files (images, documents) are available in /tmp/attachments/
+          - IMMEDIATELY read all text file contents using: View /tmp/attachment-contents/*.txt
+          - For images, note the filename and consider it as visual context
+          - All attached files are part of the issue requirements
+          - CRITICAL: You must read the file contents to understand the full scope of the issue
 
           AVAILABLE TOOLS:
           - mcp__github__get_issue: Get issue details
@@ -120,25 +187,33 @@ jobs:
           - Write: For creating new files
 
           WORKFLOW:
-          1. Get issue details and understand the problem
-          2. Check for existing PRs to avoid duplicates
-          3. If PR exists, stop here
-          4. Explore the codebase to understand the structure
-          5. Create a new branch: ai-fix/issue-{issue_number}
-          6. Implement the fix by creating/modifying files
-          7. Commit changes using git commands
-          8. Create a pull request that references the original issue
-          9. Ensure the PR description explains what was fixed and how
+          1. ALWAYS start by reading CLAUDE.md for project context
+          2. Get issue details and understand the problem
+          3. IMMEDIATELY read all downloaded file contents:
+             - Use "View /tmp/attachment-contents/*.txt" to read all text file contents
+             - Note any binary files (images) mentioned in the attachment info
+             - Consider all file contents as part of the issue requirements
+          4. Check for existing PRs to avoid duplicates
+          5. If PR exists, stop here
+          6. Explore the codebase to understand the structure
+          7. Create a new branch: ai-fix/issue-{issue_number}
+          8. Implement the fix by creating/modifying files
+          9. Commit changes using git commands
+          10. Create a pull request that references the original issue
+          11. Ensure the PR description explains what was fixed and how
 
           IMPORTANT:
+          - ALWAYS read CLAUDE.md first for project guidelines
+          - Check for file attachments in issue description
           - Only work on this specific issue
           - Check for existing PRs first to avoid duplicates
           - Create a descriptive branch name
           - Write clear commit messages
           - Reference the issue number in the PR title/body
           - Make sure the fix actually addresses the reported problem
-          - Follow the project's coding standards and conventions
+          - Follow the project's coding standards from CLAUDE.md
           - Include appropriate tests if the issue involves functionality
+          - Run quality gates (lint, format, types, test) before completing
           EOF
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
