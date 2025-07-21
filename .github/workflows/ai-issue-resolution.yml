@@ -106,27 +106,57 @@ jobs:
           # Look for image attachments and other file links
           # Handle potential empty or malformed issue body
           if [ -s /tmp/issue-body.txt ]; then
-            grep -o 'https://user-images\.githubusercontent\.com/[^)]*' /tmp/issue-body.txt > /tmp/attachments.txt || true
-            grep -o 'https://github\.com/[^)]*' /tmp/issue-body.txt >> /tmp/attachments.txt || true
+            echo "DEBUG: Looking for URLs in issue body..." >> /tmp/attachment-info.txt
+            echo "DEBUG: Issue body content:" >> /tmp/attachment-info.txt
+            cat /tmp/issue-body.txt >> /tmp/attachment-info.txt
+            echo "DEBUG: End of issue body" >> /tmp/attachment-info.txt
+
+                                    # Look for GitHub user-attachments URLs (the only ones we should download)
+            grep -o 'https://github\.com/user-attachments/files/[^)]*' /tmp/issue-body.txt > /tmp/attachments.txt || true
+            grep -o 'https://user-images\.githubusercontent\.com/[^)]*' /tmp/issue-body.txt >> /tmp/attachments.txt || true
+
+            # Extract URLs from markdown links: [text](url) - but only GitHub attachments
+            grep -o '\[[^]]*\]\(https://github\.com/user-attachments/files/[^)]*\)' /tmp/issue-body.txt | sed 's/.*(\(https:\/\/[^)]*\)).*/\1/' >> /tmp/attachments.txt || true
+            grep -o '\[[^]]*\]\(https://user-images\.githubusercontent\.com/[^)]*\)' /tmp/issue-body.txt | sed 's/.*(\(https:\/\/[^)]*\)).*/\1/' >> /tmp/attachments.txt || true
+            # Extract URLs from markdown image links: ![alt](url) - but only GitHub attachments
+            grep -o '!\[[^]]*\]\(https://github\.com/user-attachments/files/[^)]*\)' /tmp/issue-body.txt | sed 's/.*(\(https:\/\/[^)]*\)).*/\1/' >> /tmp/attachments.txt || true
+            grep -o '!\[[^]]*\]\(https://user-images\.githubusercontent\.com/[^)]*\)' /tmp/issue-body.txt | sed 's/.*(\(https:\/\/[^)]*\)).*/\1/' >> /tmp/attachments.txt || true
+
+            # Remove duplicates and empty lines
+            sort -u /tmp/attachments.txt | grep -v '^$' > /tmp/attachments-deduped.txt
+            mv /tmp/attachments-deduped.txt /tmp/attachments.txt
+
+            echo "DEBUG: Found URLs (deduplicated):" >> /tmp/attachment-info.txt
+            cat /tmp/attachments.txt >> /tmp/attachment-info.txt
           else
             echo "No issue body content found" > /tmp/attachments.txt
           fi
 
           # Download and process each attachment
           if [ -s /tmp/attachments.txt ]; then
-            echo "Found file attachments:" > /tmp/attachment-info.txt
+            echo "Found file attachments:" >> /tmp/attachment-info.txt
             cat /tmp/attachments.txt >> /tmp/attachment-info.txt
             echo "" >> /tmp/attachment-info.txt
 
             # Process each attachment
             while IFS= read -r url; do
               if [ -n "$url" ]; then
+                echo "DEBUG: Processing URL: $url" >> /tmp/attachment-info.txt
+
                 # Extract filename from URL
                 filename=$(basename "$url" | cut -d'?' -f1)
+                echo "DEBUG: Extracted filename: $filename" >> /tmp/attachment-info.txt
 
-                # Download the file
-                if curl -s -L "$url" -o "/tmp/attachments/$filename"; then
+                # Download the file with verbose output
+                echo "DEBUG: Attempting to download $url to /tmp/attachments/$filename" >> /tmp/attachment-info.txt
+                curl_result=$(curl -s -L -w "%{http_code}" "$url" -o "/tmp/attachments/$filename")
+                http_code="${curl_result: -3}"
+                echo "DEBUG: curl HTTP code: $http_code" >> /tmp/attachment-info.txt
+
+                if [ "$http_code" = "200" ]; then
                   echo "Downloaded: $filename" >> /tmp/attachment-info.txt
+                  echo "DEBUG: File size: $(wc -c < "/tmp/attachments/$filename") bytes" >> /tmp/attachment-info.txt
+                  echo "DEBUG: File type: $(file -b "/tmp/attachments/$filename")" >> /tmp/attachment-info.txt
 
                   # Check if it's a text file we can read
                   file_type=$(file -b "/tmp/attachments/$filename" | cut -d',' -f1)
@@ -142,13 +172,22 @@ jobs:
                     echo "Text file contents available for: $filename" >> /tmp/attachment-info.txt
                     # Also include file contents directly in attachment info
                     echo "=== DIRECT FILE CONTENTS: $filename ===" >> /tmp/attachment-info.txt
-                    cat "/tmp/attachments/$filename" >> /tmp/attachment-info.txt
+                    echo "DEBUG: About to read file contents from /tmp/attachments/$filename" >> /tmp/attachment-info.txt
+                    if [ -f "/tmp/attachments/$filename" ]; then
+                      echo "DEBUG: File exists, reading contents..." >> /tmp/attachment-info.txt
+                      cat "/tmp/attachments/$filename" >> /tmp/attachment-info.txt
+                      echo "DEBUG: Finished reading file contents" >> /tmp/attachment-info.txt
+                    else
+                      echo "DEBUG: ERROR - File does not exist: /tmp/attachments/$filename" >> /tmp/attachment-info.txt
+                    fi
                     echo "=== END DIRECT FILE CONTENTS: $filename ===" >> /tmp/attachment-info.txt
                   else
                     echo "Binary file (image/document): $filename" >> /tmp/attachment-info.txt
                   fi
                 else
                   echo "Failed to download: $filename" >> /tmp/attachment-info.txt
+                  echo "DEBUG: curl failed with HTTP code: $http_code" >> /tmp/attachment-info.txt
+                  echo "DEBUG: curl output: $curl_result" >> /tmp/attachment-info.txt
                 fi
               fi
             done < /tmp/attachments.txt
@@ -209,16 +248,13 @@ jobs:
              - Be ready for review
 
           FILE ATTACHMENTS:
-          - Text files have been downloaded and their contents are available in /tmp/attachment-contents/
-          - Text files are also available in /tmp/attachment-readable/ for direct reading
-          - Text files are available in ./attachments/ (Claude accessible)
-          - Binary files (images, documents) are available in /tmp/attachments/
           - TEXT FILE CONTENTS ARE INCLUDED DIRECTLY IN THE ATTACHMENT INFO BELOW
-          - IMMEDIATELY read all text file contents using: View ./attachments/* OR View /tmp/attachment-contents/*.txt
+          - Look for "=== DIRECT FILE CONTENTS: filename ===" sections in the prompt
+          - DO NOT use Read/View tools for files that have content in the prompt
+          - Binary files (images, documents) are noted but not read
           - For images, note the filename and consider it as visual context
           - All attached files are part of the issue requirements
           - CRITICAL: You must read the file contents to understand the full scope of the issue
-          - DEBUG: Working directory is $(pwd), attachments should be in ./attachments/
 
           AVAILABLE TOOLS:
           - mcp__github__get_issue: Get issue details
@@ -235,12 +271,11 @@ jobs:
           WORKFLOW:
           1. ALWAYS start by reading CLAUDE.md for project context
           2. Get issue details and understand the problem
-          3. IMMEDIATELY read all downloaded file contents:
-             - Use "View ./attachments/*" to read all text files directly (Claude accessible)
-             - Use "View /tmp/attachment-contents/*.txt" to read formatted text file contents
-             - Check the attachment info for the exact list of available files
-             - Note any binary files (images) mentioned in the attachment info
-             - Consider all file contents as part of the issue requirements
+          3. CRITICAL: File contents are already included in this prompt below
+             - Look for "=== DIRECT FILE CONTENTS: filename ===" sections in the attachment info
+             - The file contents are right here in the prompt - DO NOT use Read/View tools for these
+             - If you see file contents in the prompt, use them directly
+             - Only use View tools if you need additional files not mentioned in the prompt
           4. Check for existing PRs to avoid duplicates
           5. If PR exists, stop here
           6. Explore the codebase to understand the structure
