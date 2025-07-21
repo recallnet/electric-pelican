@@ -166,10 +166,14 @@ jobs:
                 # Download the file with verbose output
                 echo "DEBUG: Attempting to download $url to /tmp/attachments/$filename"
                 echo "DEBUG: Attempting to download $url to /tmp/attachments/$filename" >> /tmp/attachment-info.txt
-                curl_result=$(curl -s -L -w "%{http_code}" "$url" -o "/tmp/attachments/$filename")
+                curl_result=$(curl -s -L -w "%{http_code}" -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$url" -o "/tmp/attachments/$filename")
                 http_code="${curl_result: -3}"
                 echo "DEBUG: curl HTTP code: $http_code"
                 echo "DEBUG: curl HTTP code: $http_code" >> /tmp/attachment-info.txt
+
+                # Debug: Show curl response for debugging
+                echo "DEBUG: Full curl response: $curl_result"
+                echo "DEBUG: File size after download: $(wc -c < "/tmp/attachments/$filename" 2>/dev/null || echo '0') bytes"
 
                 if [ "$http_code" = "200" ]; then
                   echo "Downloaded: $filename" >> /tmp/attachment-info.txt
@@ -359,5 +363,4 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            console.log(`⚠️ User ${context.payload.sender.login} does not have sufficient repository access. AI resolution workflow will not run.`);
-            console.log('Only repository collaborators with write access or higher can trigger AI issue resolution.');
+            console.log(`
