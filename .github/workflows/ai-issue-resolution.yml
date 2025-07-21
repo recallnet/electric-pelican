@@ -26,34 +26,35 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Check organization membership
-        id: check-membership
+      - name: Check repository access
+        id: check-access
         uses: actions/github-script@v7
         with:
           script: |
             try {
-              // Check if the user is a member of the organization
-              const membership = await github.rest.orgs.getMembershipForUser({
-                org: context.repo.owner,
+              // Check if the user is a collaborator on the repository
+              const collaborator = await github.rest.repos.getCollaboratorPermissionLevel({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
                 username: context.payload.sender.login
               });
 
-              // Check if user has appropriate role (member, admin, owner)
-              const role = membership.data.role;
-              if (role === 'member' || role === 'admin' || role === 'owner') {
-                console.log(`✅ User ${context.payload.sender.login} is a ${role} of the organization`);
-                core.setOutput('is-member', 'true');
+              // Check if user has appropriate permissions (admin, write, maintain, triage)
+              const permission = collaborator.data.permission;
+              if (permission === 'admin' || permission === 'write' || permission === 'maintain' || permission === 'triage') {
+                console.log(`✅ User ${context.payload.sender.login} has ${permission} access to the repository`);
+                core.setOutput('has-access', 'true');
               } else {
-                console.log(`❌ User ${context.payload.sender.login} is not a member of the organization`);
-                core.setOutput('is-member', 'false');
+                console.log(`❌ User ${context.payload.sender.login} does not have sufficient access (${permission})`);
+                core.setOutput('has-access', 'false');
               }
             } catch (error) {
-              console.log(`❌ User ${context.payload.sender.login} is not a member of the organization`);
-              core.setOutput('is-member', 'false');
+              console.log(`❌ User ${context.payload.sender.login} is not a collaborator on the repository`);
+              core.setOutput('has-access', 'false');
             }
 
       - name: Setup GitHub MCP Server
-        if: steps.check-membership.outputs.is-member == 'true'
+        if: steps.check-access.outputs.has-access == 'true'
         run: |
           mkdir -p /tmp/mcp-config
           cat > /tmp/mcp-config/mcp-servers.json << 'EOF'
@@ -78,7 +79,7 @@ jobs:
           EOF
 
       - name: Create AI resolution prompt
-        if: steps.check-membership.outputs.is-member == 'true'
+        if: steps.check-access.outputs.has-access == 'true'
         run: |
           mkdir -p /tmp/claude-prompts
           cat > /tmp/claude-prompts/ai-resolution-prompt.txt << 'EOF'
@@ -143,7 +144,7 @@ jobs:
           GITHUB_REPOSITORY: ${{ github.repository }}
 
       - name: Run Claude Code for AI Resolution
-        if: steps.check-membership.outputs.is-member == 'true'
+        if: steps.check-access.outputs.has-access == 'true'
         id: ai-resolution
         uses: anthropics/claude-code-base-action@beta
         with:
@@ -154,7 +155,7 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
 
       - name: Mark issue as processed
-        if: steps.check-membership.outputs.is-member == 'true' && steps.ai-resolution.outputs.conclusion == 'success'
+        if: steps.check-access.outputs.has-access == 'true' && steps.ai-resolution.outputs.conclusion == 'success'
         uses: actions/github-script@v7
         with:
           script: |
@@ -165,10 +166,10 @@ jobs:
               labels: ['ai-processed']
             })
 
-      - name: Handle non-member access
-        if: steps.check-membership.outputs.is-member == 'false'
+      - name: Handle insufficient access
+        if: steps.check-access.outputs.has-access == 'false'
         uses: actions/github-script@v7
         with:
           script: |
-            console.log(`⚠️ User ${context.payload.sender.login} is not a member of the organization. AI resolution workflow will not run.`);
-            console.log('Only organization members can trigger AI issue resolution.');
+            console.log(`⚠️ User ${context.payload.sender.login} does not have sufficient repository access. AI resolution workflow will not run.`);
+            console.log('Only repository collaborators with write access or higher can trigger AI issue resolution.');
