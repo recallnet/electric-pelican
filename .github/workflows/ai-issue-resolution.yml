@@ -96,6 +96,7 @@ jobs:
           mkdir -p /tmp/attachments
           mkdir -p /tmp/attachment-contents
           mkdir -p /tmp/attachment-readable
+          mkdir -p ./attachments
 
           # Look for image attachments and other file links
           # Handle potential empty or malformed issue body
@@ -127,6 +128,8 @@ jobs:
                   if [[ "$file_type" == *"text"* ]] || [[ "$filename" =~ \.(txt|md|json|js|ts|jsx|tsx|py|java|c|cpp|h|hpp|css|html|xml|yaml|yml|toml|ini|conf|log|sh|bash|zsh|fish)$ ]]; then
                     # Copy text file to readable directory for Claude
                     cp "/tmp/attachments/$filename" "/tmp/attachment-readable/$filename"
+                    # Copy to repository workspace for Claude access
+                    cp "/tmp/attachments/$filename" "./attachments/$filename"
                     echo "=== CONTENTS OF $filename ===" > "/tmp/attachment-contents/$filename.txt"
                     cat "/tmp/attachments/$filename" >> "/tmp/attachment-contents/$filename.txt"
                     echo "=== END OF $filename ===" >> "/tmp/attachment-contents/$filename.txt"
@@ -143,6 +146,7 @@ jobs:
             echo "" >> /tmp/attachment-info.txt
             echo "Text file contents are available in /tmp/attachment-contents/" >> /tmp/attachment-info.txt
             echo "Text files are available in /tmp/attachment-readable/" >> /tmp/attachment-info.txt
+            echo "Text files are available in ./attachments/ (Claude accessible)" >> /tmp/attachment-info.txt
             echo "Binary files are available in /tmp/attachments/" >> /tmp/attachment-info.txt
           else
             echo "No file attachments found in issue." > /tmp/attachment-info.txt
@@ -186,8 +190,9 @@ jobs:
           FILE ATTACHMENTS:
           - Text files have been downloaded and their contents are available in /tmp/attachment-contents/
           - Text files are also available in /tmp/attachment-readable/ for direct reading
+          - Text files are available in ./attachments/ (Claude accessible)
           - Binary files (images, documents) are available in /tmp/attachments/
-          - IMMEDIATELY read all text file contents using: View /tmp/attachment-readable/* OR View /tmp/attachment-contents/*.txt
+          - IMMEDIATELY read all text file contents using: View ./attachments/* OR View /tmp/attachment-contents/*.txt
           - For images, note the filename and consider it as visual context
           - All attached files are part of the issue requirements
           - CRITICAL: You must read the file contents to understand the full scope of the issue
@@ -208,7 +213,7 @@ jobs:
           1. ALWAYS start by reading CLAUDE.md for project context
           2. Get issue details and understand the problem
           3. IMMEDIATELY read all downloaded file contents:
-             - Use "View /tmp/attachment-readable/*" to read all text files directly
+             - Use "View ./attachments/*" to read all text files directly (Claude accessible)
              - Use "View /tmp/attachment-contents/*.txt" to read formatted text file contents
              - Note any binary files (images) mentioned in the attachment info
              - Consider all file contents as part of the issue requirements
@@ -259,6 +264,15 @@ jobs:
               repo: context.repo.repo,
               labels: ['ai-processed']
             })
+
+      - name: Cleanup attachment files
+        if: always()
+        run: |
+          # Clean up attachment files from repository
+          rm -rf ./attachments || true
+          rm -rf /tmp/attachments || true
+          rm -rf /tmp/attachment-contents || true
+          rm -rf /tmp/attachment-readable || true
 
       - name: Handle insufficient access
         if: steps.check-access.outputs.has-access == 'false'
