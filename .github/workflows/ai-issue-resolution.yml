@@ -135,10 +135,15 @@ jobs:
                     cp "/tmp/attachments/$filename" "/tmp/attachment-readable/$filename"
                     # Copy to repository workspace for Claude access
                     cp "/tmp/attachments/$filename" "./attachments/$filename"
+                    echo "Copied $filename to ./attachments/" >> /tmp/attachment-info.txt
                     echo "=== CONTENTS OF $filename ===" > "/tmp/attachment-contents/$filename.txt"
                     cat "/tmp/attachments/$filename" >> "/tmp/attachment-contents/$filename.txt"
                     echo "=== END OF $filename ===" >> "/tmp/attachment-contents/$filename.txt"
                     echo "Text file contents available for: $filename" >> /tmp/attachment-info.txt
+                    # Also include file contents directly in attachment info
+                    echo "=== DIRECT FILE CONTENTS: $filename ===" >> /tmp/attachment-info.txt
+                    cat "/tmp/attachments/$filename" >> /tmp/attachment-info.txt
+                    echo "=== END DIRECT FILE CONTENTS: $filename ===" >> /tmp/attachment-info.txt
                   else
                     echo "Binary file (image/document): $filename" >> /tmp/attachment-info.txt
                   fi
@@ -155,6 +160,14 @@ jobs:
             echo "Current working directory: $(pwd)" >> /tmp/attachment-info.txt
             echo "Files in ./attachments/:" >> /tmp/attachment-info.txt
             ls -la ./attachments/ >> /tmp/attachment-info.txt 2>&1 || echo "No files in ./attachments/" >> /tmp/attachment-info.txt
+            echo "File contents in ./attachments/:" >> /tmp/attachment-info.txt
+            for file in ./attachments/*; do
+              if [ -f "$file" ]; then
+                echo "=== $file ===" >> /tmp/attachment-info.txt
+                head -20 "$file" >> /tmp/attachment-info.txt
+                echo "=== END $file ===" >> /tmp/attachment-info.txt
+              fi
+            done
             echo "Binary files are available in /tmp/attachments/" >> /tmp/attachment-info.txt
           else
             echo "No file attachments found in issue." > /tmp/attachment-info.txt
@@ -200,6 +213,7 @@ jobs:
           - Text files are also available in /tmp/attachment-readable/ for direct reading
           - Text files are available in ./attachments/ (Claude accessible)
           - Binary files (images, documents) are available in /tmp/attachments/
+          - TEXT FILE CONTENTS ARE INCLUDED DIRECTLY IN THE ATTACHMENT INFO BELOW
           - IMMEDIATELY read all text file contents using: View ./attachments/* OR View /tmp/attachment-contents/*.txt
           - For images, note the filename and consider it as visual context
           - All attached files are part of the issue requirements
