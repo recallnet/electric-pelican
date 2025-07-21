@@ -247,6 +247,9 @@ jobs:
         run: |
           mkdir -p /tmp/claude-prompts
 
+          # Write issue description to file to avoid shell interpretation
+          echo "${{ github.event.issue.body }}" > /tmp/issue-description.txt
+
           # Debug: Show what's in the attachment info file
           echo "DEBUG: Contents of /tmp/attachment-info.txt:"
           cat /tmp/attachment-info.txt || echo "File does not exist"
@@ -259,7 +262,8 @@ jobs:
           - Repository: ${GITHUB_REPOSITORY}
           - Issue Number: ${{ github.event.issue.number }}
           - Issue Title: "${{ github.event.issue.title }}"
-          - Issue Description: "${{ github.event.issue.body }}"
+          - Issue Description:
+          $(cat /tmp/issue-description.txt)
 
           CRITICAL: Always read CLAUDE.md first for project context and development guidelines.
 
