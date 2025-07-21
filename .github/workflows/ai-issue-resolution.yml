@@ -106,17 +106,23 @@ jobs:
           # Look for image attachments and other file links
           # Handle potential empty or malformed issue body
           if [ -s /tmp/issue-body.txt ]; then
-            echo "DEBUG: Looking for URLs in issue body..." >> /tmp/attachment-info.txt
+            echo "DEBUG: Looking for URLs in issue body..."
             echo "DEBUG: Issue body content:" >> /tmp/attachment-info.txt
             cat /tmp/issue-body.txt >> /tmp/attachment-info.txt
             echo "DEBUG: End of issue body" >> /tmp/attachment-info.txt
 
-                                    # Look for GitHub user-attachments URLs (the only ones we should download)
+            # Look for GitHub user-attachments URLs (the only ones we should download)
+            echo "DEBUG: Searching for GitHub user-attachments URLs..."
             grep -o 'https://github\.com/user-attachments/files/[^)]*' /tmp/issue-body.txt > /tmp/attachments.txt || true
+            echo "DEBUG: Found direct URLs:"
+            cat /tmp/attachments.txt
             grep -o 'https://user-images\.githubusercontent\.com/[^)]*' /tmp/issue-body.txt >> /tmp/attachments.txt || true
 
             # Extract URLs from markdown links: [text](url) - but only GitHub attachments
+            echo "DEBUG: Searching for markdown links..."
             grep -o '\[[^]]*\]\(https://github\.com/user-attachments/files/[^)]*\)' /tmp/issue-body.txt | sed 's/.*(\(https:\/\/[^)]*\)).*/\1/' >> /tmp/attachments.txt || true
+            echo "DEBUG: Found markdown links:"
+            grep -o '\[[^]]*\]\(https://github\.com/user-attachments/files/[^)]*\)' /tmp/issue-body.txt || echo "No markdown links found"
             grep -o '\[[^]]*\]\(https://user-images\.githubusercontent\.com/[^)]*\)' /tmp/issue-body.txt | sed 's/.*(\(https:\/\/[^)]*\)).*/\1/' >> /tmp/attachments.txt || true
             # Extract URLs from markdown image links: ![alt](url) - but only GitHub attachments
             grep -o '!\[[^]]*\]\(https://github\.com/user-attachments/files/[^)]*\)' /tmp/issue-body.txt | sed 's/.*(\(https:\/\/[^)]*\)).*/\1/' >> /tmp/attachments.txt || true
@@ -126,6 +132,8 @@ jobs:
             sort -u /tmp/attachments.txt | grep -v '^$' > /tmp/attachments-deduped.txt
             mv /tmp/attachments-deduped.txt /tmp/attachments.txt
 
+            echo "DEBUG: Found URLs (deduplicated):"
+            cat /tmp/attachments.txt
             echo "DEBUG: Found URLs (deduplicated):" >> /tmp/attachment-info.txt
             cat /tmp/attachments.txt >> /tmp/attachment-info.txt
           else
@@ -133,7 +141,10 @@ jobs:
           fi
 
           # Download and process each attachment
+          echo "DEBUG: Checking if attachments.txt has content..."
           if [ -s /tmp/attachments.txt ]; then
+            echo "DEBUG: Found attachments to process:"
+            cat /tmp/attachments.txt
             echo "Found file attachments:" >> /tmp/attachment-info.txt
             cat /tmp/attachments.txt >> /tmp/attachment-info.txt
             echo "" >> /tmp/attachment-info.txt
@@ -209,6 +220,9 @@ jobs:
             done
             echo "Binary files are available in /tmp/attachments/" >> /tmp/attachment-info.txt
           else
+            echo "DEBUG: No attachments.txt file found or it's empty"
+            echo "DEBUG: Contents of /tmp/attachments.txt:"
+            cat /tmp/attachments.txt || echo "File does not exist"
             echo "No file attachments found in issue." > /tmp/attachment-info.txt
           fi
 
