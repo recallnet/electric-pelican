@@ -80,17 +80,30 @@ jobs:
 
       - name: Extract and download file attachments from issue
         if: steps.check-access.outputs.has-access == 'true'
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
           # Extract file attachments from issue description
-          echo "${{ github.event.issue.body }}" > /tmp/issue-body.txt
+          # Use environment variable to avoid expansion issues
+          printf '%s\n' "$ISSUE_BODY" > /tmp/issue-body.txt
+
+          # Debug: Check if issue body was captured
+          echo "Issue body length: $(wc -c < /tmp/issue-body.txt)"
+          echo "First 100 chars of issue body:"
+          head -c 100 /tmp/issue-body.txt || echo "Could not read issue body"
 
           # Create directories for attachments
           mkdir -p /tmp/attachments
           mkdir -p /tmp/attachment-contents
 
           # Look for image attachments and other file links
-          grep -o 'https://user-images\.githubusercontent\.com/[^)]*' /tmp/issue-body.txt > /tmp/attachments.txt || true
-          grep -o 'https://github\.com/[^)]*' /tmp/issue-body.txt >> /tmp/attachments.txt || true
+          # Handle potential empty or malformed issue body
+          if [ -s /tmp/issue-body.txt ]; then
+            grep -o 'https://user-images\.githubusercontent\.com/[^)]*' /tmp/issue-body.txt > /tmp/attachments.txt || true
+            grep -o 'https://github\.com/[^)]*' /tmp/issue-body.txt >> /tmp/attachments.txt || true
+          else
+            echo "No issue body content found" > /tmp/attachments.txt
+          fi
 
           # Download and process each attachment
           if [ -s /tmp/attachments.txt ]; then
