@@ -175,31 +175,11 @@ jobs:
           if [ -n "$PR_URL" ]; then
             echo "Found PR URL: $PR_URL"
             echo "pr_url=$PR_URL" >> $GITHUB_OUTPUT
-
-            # Create comment for the issue
-            COMMENT="🤖 **AI Resolution Complete**
-
-            This issue has been automatically resolved by Claude AI.
-
-            **Pull Request:** [$PR_URL]($PR_URL)
-
-            The AI assistant has:
-            - ✅ Analyzed the issue requirements
-            - ✅ Implemented the necessary changes
-            - ✅ Created a pull request with the fix
-            - ✅ Referenced this issue in the PR
-
-            Please review the changes and merge if everything looks good!"
-
-            echo "comment=$COMMENT" >> $GITHUB_OUTPUT
+            echo "comment_type=success" >> $GITHUB_OUTPUT
           else
             echo "No PR URL found in Claude output"
             echo "pr_url=" >> $GITHUB_OUTPUT
-            echo "comment=🤖 **AI Resolution Attempted**
-
-            Claude AI attempted to resolve this issue but no pull request URL was found in the output.
-
-            Please check the workflow logs for more details." >> $GITHUB_OUTPUT
+            echo "comment_type=fallback" >> $GITHUB_OUTPUT
           fi
 
       - name: Add comment to issue
@@ -207,24 +187,39 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
+            const prUrl = '${{ steps.pr-comment.outputs.pr_url }}';
+            const comment = '🤖 **AI Resolution Complete**\n\n' +
+              'This issue has been automatically resolved by Claude AI.\n\n' +
+              '**Pull Request:** [' + prUrl + '](' + prUrl + ')\n\n' +
+              'The AI assistant has:\n' +
+              '- ✅ Analyzed the issue requirements\n' +
+              '- ✅ Implemented the necessary changes\n' +
+              '- ✅ Created a pull request with the fix\n' +
+              '- ✅ Referenced this issue in the PR\n\n' +
+              'Please review the changes and merge if everything looks good!';
+
             github.rest.issues.createComment({
               issue_number: ${{ github.event.issue.number }},
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `${{ steps.pr-comment.outputs.comment }}`
-            })
+              body: comment
+            });
 
       - name: Add fallback comment to issue
         if: steps.check-access.outputs.has-access == 'true' && steps.ai-resolution.outputs.conclusion == 'success' && steps.pr-comment.outputs.pr_url == ''
         uses: actions/github-script@v7
         with:
           script: |
+            const comment = '🤖 **AI Resolution Attempted**\n\n' +
+              'Claude AI attempted to resolve this issue but no pull request URL was found in the output.\n\n' +
+              'Please check the workflow logs for more details.';
+
             github.rest.issues.createComment({
               issue_number: ${{ github.event.issue.number }},
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: `${{ steps.pr-comment.outputs.comment }}`
-            })
+              body: comment
+            });
 
       - name: Mark issue as processed
         if: steps.check-access.outputs.has-access == 'true' && steps.ai-resolution.outputs.conclusion == 'success'
