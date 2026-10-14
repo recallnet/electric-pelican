@@ -99,3 +99,6 @@ Thumbs.db
 
 .bak
 
+
+# Machine-local agent permissions may contain credentials
+.claude/settings.local.json
